@@ -1,4 +1,6 @@
 import axios from "axios";
+import { AxiosError } from "axios";
+import { showToast } from "./components/Toast";
 
 const API_URL = "http://localhost:5000";
 
@@ -8,36 +10,40 @@ export const loginWithSpotify = () => {
 
 export const fetchPlaylists = async (token: string) => {
   try {
-    const response = await axios.get(`${API_URL}/auth/playlists`, {
-      headers: { Authorization: `${token}` },
-    });
-
-    return response.data; // Return playlists data
-  } catch (error) {
-    console.error("Error fetching playlists:", error);
-    throw error;
-  }
-};
-
-// Fetch tracks from a specific Spotify playlist
-export const fetchPlaylistTracks = async (token: string, playlistId: string) => {
-  if (!playlistId) {
-    console.error("fetchPlaylistTracks error: playlistId is undefined");
-    return;
-  }
-  try {
-    //console.log(`Fetching tracks for playlist: ${playlistId}`);
-    const response = await axios.get(`${API_URL}/auth/playlist/${playlistId}/tracks`, {
+    const response = await axios.get("https://api.spotify.com/v1/me/playlists", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    return response.data; // List of tracks
+    return response.data.items.map((playlist: any) => ({
+      id: playlist.id,
+      name: playlist.name,
+      image: playlist.images.length > 0 ? playlist.images[0].url : "",
+      totalTracks: playlist.tracks.total,
+    }));
   } catch (error) {
-    console.error("Error fetching playlist tracks:", error);
+    console.error("🚨 Error fetching playlists:", error.response?.data || error.message);
     throw error;
   }
 };
 
+export const fetchPlaylistTracks = async (token: string, playlistId: string) => {
+  try {
+    const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return response.data.items.map((item: any) => ({
+      id: item.track.id,
+      name: item.track.name,
+      artist: item.track.artists.map((artist: any) => artist.name).join(", "),
+      album: item.track.album.name,
+      albumArt: item.track.album.images.length > 0 ? item.track.album.images[0].url : "", // ✅ Get album cover
+    }));
+  } catch (error: any) {
+    console.error("🚨 Error fetching Spotify playlist tracks:", error.response?.data || error.message);
+    throw error;
+  }
+};
 // Refresh Spotify access token
 export const refreshSpotifyToken = async (refreshToken: string) => {
   try {
@@ -55,7 +61,11 @@ export const refreshSpotifyToken = async (refreshToken: string) => {
 //YOUTUBE
 
 // Redirect user to YouTube login
-export const loginWithYouTube = () => {
+export const loginWithYouTube = (playlistId: string, playlistName: string) => {
+  // ✅ Store the selected playlist in localStorage before redirecting
+  localStorage.setItem("selectedPlaylistId", playlistId);
+  localStorage.setItem("selectedPlaylistName", playlistName);
+
   window.location.href = `${API_URL}/youtube/auth`;
 };
 
@@ -87,20 +97,50 @@ export const searchYouTube = async (query: string) => {
     }
 
     return response.data;
-  } catch (error) {
+  } catch (error: AxiosError | any) {
     console.error("Error searching YouTube:", error.response?.data || error.message);
     return null;
   }
 };
 
 // Create a YouTube playlist with the selected videos
-export const createYouTubePlaylist = async (title: string, videoIds: string[], token: string) => {
+export const createYouTubePlaylist = async (title: string, videoIds: string[], accessToken: string) => {
   try {
-    const response = await axios.post(`${API_URL}/youtube/create-playlist`, { title, videoIds, accessToken: token });
+    if (!title || !videoIds.length || !accessToken) {
+      throw new Error("Missing required fields for YouTube playlist creation");
+    }
 
-    return response.data; // Returns YouTube playlist ID
-  } catch (error) {
-    console.error("Error creating YouTube playlist:", error);
+    const response = await axios.post(`${API_URL}/youtube/create-playlist`, {
+      title,
+      videoIds,
+      accessToken,
+    });
+    const playlistID = response.data.id;
+    return `https://www.youtube.com/playlist?list=${playlistID}`; // Returns YouTube playlist URL
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      return { error: "YouTube API limit exceeded" };
+    }
+    console.error("Error searching YouTube:", error.response?.data || error.message);
+    return null;
+  }
+};
+
+// ✅ Fetch Spotify playlist details (name, description, etc.)
+export const fetchPlaylistDetails = async (token: string, playlistId: string) => {
+  try {
+    const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return {
+      id: response.data.id,
+      name: response.data.name, // ✅ Playlist name
+      description: response.data.description || "", // ✅ Optional description
+      owner: response.data.owner.display_name, // ✅ Playlist creator
+    };
+  } catch (error: any) {
+    console.error("🚨 Error fetching Spotify playlist details:", error.response?.data || error.message);
     throw error;
   }
 };

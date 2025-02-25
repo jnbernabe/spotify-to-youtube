@@ -1,5 +1,5 @@
 import express from "express";
-import axios from "axios";
+import axios, { Axios, AxiosError } from "axios";
 import dotenv from "dotenv";
 import querystring from "querystring";
 
@@ -11,6 +11,8 @@ const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
 const YOUTUBE_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY!;
+const YOUTUBE_PLAYLIST_URL = "https://www.googleapis.com/youtube/v3/playlists";
+const YOUTUBE_PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
 const FRONTEND_URI = "http://localhost:5173"; // Your frontend URL
 
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
@@ -18,8 +20,8 @@ const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 router.get("/auth", (req, res) => {
   const scope = "https://www.googleapis.com/auth/youtube.force-ssl";
   const authUrl = `https://accounts.google.com/o/oauth2/auth?${querystring.stringify({
-    client_id: YOUTUBE_CLIENT_ID,
-    redirect_uri: YOUTUBE_REDIRECT_URI,
+    client_id: process.env.YOUTUBE_CLIENT_ID,
+    redirect_uri: process.env.YOUTUBE_REDIRECT_URI,
     response_type: "code",
     scope,
     access_type: "offline",
@@ -50,9 +52,9 @@ router.get("/auth/callback", async (req, res) => {
     );
 
     const { access_token, refresh_token } = response.data;
-    console.log("YouTube tokens:", access_token, refresh_token);
+    //console.log("YouTube tokens:", access_token, refresh_token);
     // Redirect user to frontend with tokens
-    res.redirect(`${FRONTEND_URI}/#youtube_access_token=${access_token}&youtube_refresh_token=${refresh_token}`);
+    res.redirect(`${FRONTEND_URI}/dashboard?youtube_access_token=${access_token}&youtube_refresh_token=${refresh_token}`);
   } catch (error) {
     console.error("Error fetching YouTube token:", error);
     res.redirect(`${FRONTEND_URI}/?error=token_fetch_failed`);
@@ -105,11 +107,9 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => 
     }
 
     res.json(response.data.items[0]);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("YouTube Search API Error:", error.response?.data || error.message);
-    } else {
-      console.error("YouTube Search API Error:", error);
+  } catch (error: any) {
+    if (error.response.status === 403) {
+      return res.status(403).json({ error: "403 Forbidden. YouTube API limit exceeded." });
     }
     res.status(500).json({ error: "Failed to fetch YouTube video." });
   }
@@ -117,34 +117,66 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => 
 router.get("/search", youtubeSearch);
 
 // Create a YouTube Playlist and Add Videos
-router.post("/create-playlist", async (req, res) => {
+const createPlaylist: express.RequestHandler = async (req, res): Promise<any> => {
   const { title, videoIds, accessToken } = req.body;
+  //   console.log("title", title);
+  //   console.log("videoIds", videoIds);
+  //   console.log("accessToken", accessToken);
+  if (!title || !videoIds || !accessToken) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
 
   try {
-    const response = await axios.post(
-      "https://www.googleapis.com/youtube/v3/playlists",
+    // 1️⃣ **Step 1: Create Playlist**
+    const createResponse = await axios.post(
+      `${YOUTUBE_PLAYLIST_URL}?part=snippet`, // ✅ Corrected part parameter
       {
-        snippet: { title },
-        status: { privacyStatus: "public" },
+        snippet: {
+          title: title,
+          description: "Playlist created via API",
+        },
       },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
 
-    const playlistId = response.data.id;
+    const playlistId = createResponse.data.id;
+    console.log(`✅ Playlist Created: ${playlistId}`);
 
+    // 2️⃣ **Step 2: Add Videos to Playlist**
     for (const videoId of videoIds) {
       await axios.post(
-        "https://www.googleapis.com/youtube/v3/playlistItems",
-        { snippet: { playlistId, resourceId: { kind: "youtube#video", videoId } } },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        `${YOUTUBE_PLAYLIST_ITEMS_URL}?part=snippet`, // ✅ Corrected part parameter
+        {
+          snippet: {
+            playlistId: playlistId,
+            resourceId: {
+              kind: "youtube#video",
+              videoId: videoId,
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
-    res.json({ playlistId });
-  } catch (error) {
-    console.error("Error creating YouTube playlist:", error);
-    res.status(500).json({ error: "Failed to create playlist" });
+    console.log("✅ All videos added to playlist.");
+    res.json({ success: true, playlistId, title });
+  } catch (error: AxiosError | any) {
+    console.error("YouTube API Error:", error.code, error.message, error.errors);
+    //console.error("Failed to create YouTube playlist:", error.data);
+    res.status(500).json({ error: error.response?.data || error.message });
   }
-});
+};
+router.post("/create-playlist", createPlaylist);
 
 export default router;

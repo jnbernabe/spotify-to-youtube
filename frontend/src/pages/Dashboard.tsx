@@ -1,55 +1,82 @@
 import React, { useState, useEffect } from "react";
 import PlaylistSelector from "../components/PlaylistSelector";
-import YouTubePlaylist from "../components/YoutubePlaylist";
-import { Button, Typography } from "@mui/material";
-import { loginWithYouTube } from "../api";
+import YouTubePlaylist from "../components/YouTubePlaylist";
+import TopNavBar from "../components/TopNavBar";
+import { Box } from "@mui/material";
+import { fetchPlaylistDetails } from "../api";
+import { motion, AnimatePresence } from "framer-motion";
+import { showToast } from "../components/Toast";
 
 interface DashboardProps {
-  spotifyToken: string | null;
+  spotifyToken: string;
   youtubeToken: string | null;
   onLogout: () => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ spotifyToken, youtubeToken, onLogout }) => {
-  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
-  const [isYouTubeLoggedIn, setIsYouTubeLoggedIn] = useState<boolean>(!!youtubeToken);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(localStorage.getItem("selectedPlaylistId"));
+  const [selectedPlaylistName, setSelectedPlaylistName] = useState<string>(localStorage.getItem("selectedPlaylistName") || "");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    // console.log("Spotify Token:", spotifyToken);
-    // console.log("YouTube Token:", youtubeToken);
-    // console.log("Selected Playlist ID:", selectedPlaylist);
+    // ✅ Restore the playlist ONLY IF the user is returning from YouTube login
+    const storedPlaylistId = localStorage.getItem("selectedPlaylistId");
+    const storedPlaylistName = localStorage.getItem("selectedPlaylistName");
 
-    if (youtubeToken) {
-      setIsYouTubeLoggedIn(true);
+    if (storedPlaylistId && storedPlaylistName && youtubeToken) {
+      setSelectedPlaylist(storedPlaylistId);
+      setSelectedPlaylistName(storedPlaylistName);
+
+      // ✅ Clear storage so new sessions start fresh
+      localStorage.removeItem("selectedPlaylistId");
+      localStorage.removeItem("selectedPlaylistName");
     }
-  }, [spotifyToken, youtubeToken, selectedPlaylist]);
+  }, [youtubeToken]);
+
+  useEffect(() => {
+    if (selectedPlaylist) {
+      fetchPlaylistDetails(spotifyToken, selectedPlaylist).then((playlist) => {
+        setSelectedPlaylistName(playlist.name);
+      });
+    }
+  }, [selectedPlaylist, spotifyToken]);
 
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <Button variant="contained" color="secondary" onClick={onLogout} style={{ marginBottom: "20px" }}>
-        Logout
-      </Button>
+    <Box>
+      <TopNavBar
+        onLogout={onLogout}
+        onSearchChange={setSearchQuery}
+        onGoToPlaylists={() => setSelectedPlaylist(null)} // ✅ Reset selection when clicking "Playlists"
+        isLoggedIn={!!spotifyToken}
+      />
 
-      <div>
-        <Typography variant="h6">{isYouTubeLoggedIn ? "✅ YouTube Connected" : "❌ YouTube Not Connected"}</Typography>
-        {!isYouTubeLoggedIn && (
-          <Button variant="contained" color="primary" onClick={loginWithYouTube} style={{ marginTop: "10px" }}>
-            Login to YouTube
-          </Button>
-        )}
-      </div>
-
-      {!selectedPlaylist ? (
-        <PlaylistSelector token={spotifyToken} onSelect={(id) => setSelectedPlaylist(id)} />
-      ) : (
-        <>
-          <Typography variant="h6" sx={{ marginBottom: 2 }}>
-            Selected Playlist ID: {selectedPlaylist}
-          </Typography>
-          <YouTubePlaylist youtubeToken={youtubeToken} spotifyToken={spotifyToken} playlistId={selectedPlaylist} />
-        </>
-      )}
-    </div>
+      <Box sx={{ padding: 3 }}>
+        <AnimatePresence mode="wait">
+          {!selectedPlaylist ? (
+            <motion.div
+              key="playlist-selector"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <PlaylistSelector
+                token={spotifyToken}
+                onSelect={(id, name) => {
+                  setSelectedPlaylist(id);
+                  setSelectedPlaylistName(name);
+                }}
+                searchQuery={searchQuery}
+              />
+            </motion.div>
+          ) : (
+            <motion.div key="youtube-playlist" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+              <YouTubePlaylist youtubeToken={youtubeToken} spotifyToken={spotifyToken} playlistId={selectedPlaylist} playlistName={selectedPlaylistName} searchQuery={searchQuery} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Box>
+    </Box>
   );
 };
 
