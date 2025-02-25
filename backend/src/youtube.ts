@@ -10,11 +10,10 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY!;
 
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 
-const youtubeSearch: express.RequestHandler = async (req, res): Promise<void> => {
+const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => {
   const { query } = req.query;
   if (!query) {
-    res.status(400).json({ message: "Query is required" }); //TODO
-    return;
+    return res.status(400).json({ message: "Query is required" }); //TODO
   }
   try {
     const response = await axios.get(YOUTUBE_SEARCH_URL, {
@@ -28,12 +27,14 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<void> =>
     });
     res.json(response.data.items[0]);
   } catch (error) {
+    console.error("Error searching YouTube:", error);
     res.status(500).json({ error: "Failed to fetch video" });
     return;
   }
 };
 router.get("/search", youtubeSearch);
 
+// Create a YouTube Playlist and Add Videos
 router.post("/create-playlist", async (req, res) => {
   const { title, videoIds, accessToken } = req.body;
 
@@ -59,6 +60,7 @@ router.post("/create-playlist", async (req, res) => {
 
     res.json({ playlistId });
   } catch (error) {
+    console.error("Error creating YouTube playlist:", error);
     res.status(500).json({ error: "Failed to create playlist" });
   }
 });
