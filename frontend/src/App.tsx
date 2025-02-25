@@ -2,67 +2,77 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
-import { refreshSpotifyToken } from "./api";
+import { refreshSpotifyToken, refreshYouTubeToken } from "./api";
 
 const App: React.FC = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [expirationTime, setExpirationTime] = useState<number | null>(null);
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [youtubeToken, setYouTubeToken] = useState<string | null>(null);
+  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState<string | null>(null);
+  const [youtubeRefreshToken, setYouTubeRefreshToken] = useState<string | null>(null);
+  const [spotifyExpiration, setSpotifyExpiration] = useState<number | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("spotify_access_token");
-    const storedRefreshToken = localStorage.getItem("spotify_refresh_token");
-    const storedExpiration = localStorage.getItem("spotify_token_expiry");
+    // Load tokens from localStorage on app start
+    const storedSpotifyToken = localStorage.getItem("spotify_access_token");
+    const storedYouTubeToken = localStorage.getItem("youtube_access_token");
+    const storedSpotifyRefresh = localStorage.getItem("spotify_refresh_token");
+    const storedYouTubeRefresh = localStorage.getItem("youtube_refresh_token");
+    const storedSpotifyExpiration = localStorage.getItem("spotify_token_expiry");
 
-    if (storedToken && storedRefreshToken && storedExpiration) {
-      setToken(storedToken);
-      setRefreshToken(storedRefreshToken);
-      setExpirationTime(Number(storedExpiration));
+    if (storedSpotifyToken && storedSpotifyRefresh && storedSpotifyExpiration) {
+      setSpotifyToken(storedSpotifyToken);
+      setSpotifyRefreshToken(storedSpotifyRefresh);
+      setSpotifyExpiration(Number(storedSpotifyExpiration));
+    }
+
+    if (storedYouTubeToken && storedYouTubeRefresh) {
+      setYouTubeToken(storedYouTubeToken);
+      setYouTubeRefreshToken(storedYouTubeRefresh);
     }
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (refreshToken && expirationTime && Date.now() >= expirationTime) {
-        refreshSpotifyToken(refreshToken).then(({ access_token, expires_in }: { access_token: string; expires_in: number }) => {
-          setToken(access_token);
-          const newExpirationTime = Date.now() + expires_in * 1000;
-          setExpirationTime(newExpirationTime);
+      if (spotifyRefreshToken && spotifyExpiration && Date.now() >= spotifyExpiration) {
+        refreshSpotifyToken(spotifyRefreshToken).then((newToken) => {
+          setSpotifyToken(newToken.access_token);
+          const newExpiration = Date.now() + newToken.expires_in * 1000;
+          setSpotifyExpiration(newExpiration);
+          localStorage.setItem("spotify_access_token", newToken.access_token);
+          localStorage.setItem("spotify_token_expiry", newExpiration.toString());
+        });
+      }
 
-          localStorage.setItem("spotify_access_token", access_token);
-          localStorage.setItem("spotify_token_expiry", newExpirationTime.toString());
+      if (youtubeRefreshToken) {
+        refreshYouTubeToken(youtubeRefreshToken).then((newToken) => {
+          setYouTubeToken(newToken);
+          localStorage.setItem("youtube_access_token", newToken);
         });
       }
     }, 60000); // Check every 60 seconds
 
     return () => clearInterval(interval);
-  }, [refreshToken, expirationTime]);
+  }, [spotifyRefreshToken, youtubeRefreshToken, spotifyExpiration]);
 
-  const handleLogin = (accessToken: string, refreshToken: string, expiresIn: number) => {
-    setToken(accessToken);
-    setRefreshToken(refreshToken);
-    const expirationTime = Date.now() + expiresIn * 1000;
-    setExpirationTime(expirationTime);
-
-    localStorage.setItem("spotify_access_token", accessToken);
-    localStorage.setItem("spotify_refresh_token", refreshToken);
-    localStorage.setItem("spotify_token_expiry", expirationTime.toString());
+  const handleLogin = (newSpotifyToken: string, newYouTubeToken: string) => {
+    setSpotifyToken(newSpotifyToken);
+    setYouTubeToken(newYouTubeToken);
+    localStorage.setItem("spotify_access_token", newSpotifyToken);
+    localStorage.setItem("youtube_access_token", newYouTubeToken);
   };
 
   const handleLogout = () => {
-    setToken(null);
-    setRefreshToken(null);
-    setExpirationTime(null);
+    setSpotifyToken(null);
+    setYouTubeToken(null);
     localStorage.removeItem("spotify_access_token");
-    localStorage.removeItem("spotify_refresh_token");
-    localStorage.removeItem("spotify_token_expiry");
+    localStorage.removeItem("youtube_access_token");
   };
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={!token ? <Home onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={token ? <Dashboard token={token} onLogout={handleLogout} /> : <Navigate to="/" />} />
+        <Route path="/" element={!spotifyToken || !youtubeToken ? <Home onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
+        <Route path="/dashboard" element={spotifyToken && youtubeToken ? <Dashboard spotifyToken={spotifyToken} youtubeToken={youtubeToken} onLogout={handleLogout} /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );

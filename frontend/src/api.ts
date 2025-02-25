@@ -38,6 +38,40 @@ export const fetchPlaylistTracks = async (token: string, playlistId: string) => 
   }
 };
 
+// Refresh Spotify access token
+export const refreshSpotifyToken = async (refreshToken: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/auth/refresh_token`, {
+      params: { refresh_token: refreshToken },
+    });
+
+    return response.data; // { access_token: string, expires_in: number }
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    throw error;
+  }
+};
+
+//YOUTUBE
+
+// Redirect user to YouTube login
+export const loginWithYouTube = () => {
+  window.location.href = "http://localhost:5000/youtube/auth";
+};
+
+// Refresh YouTube access token
+export const refreshYouTubeToken = async (refreshToken: string) => {
+  try {
+    const response = await axios.get("http://localhost:5000/youtube/refresh_token", {
+      params: { refresh_token: refreshToken },
+    });
+    return response.data.access_token;
+  } catch (error) {
+    console.error("Error refreshing YouTube token:", error);
+    throw error;
+  }
+};
+
 // Search for YouTube video by song name + artist
 export const searchYouTube = async (query: string) => {
   try {
@@ -52,27 +86,14 @@ export const searchYouTube = async (query: string) => {
   }
 };
 
-// Create a YouTube playlist and add videos
+// Create YouTube Playlist
 export const createYouTubePlaylist = async (title: string, videoIds: string[], token: string) => {
   try {
-    const response = await axios.post(`${API_URL}/youtube/create-playlist`, { title, videoIds, accessToken: token });
+    const response = await axios.post("http://localhost:5000/youtube/create-playlist", { title, videoIds, accessToken: token });
 
     return response.data; // Returns YouTube playlist ID
   } catch (error) {
     console.error("Error creating YouTube playlist:", error);
-    throw error;
-  }
-};
-
-export const refreshSpotifyToken = async (refreshToken: string) => {
-  try {
-    const response = await axios.get(`${API_URL}/auth/refresh_token`, {
-      params: { refresh_token: refreshToken },
-    });
-
-    return response.data; // { access_token: string, expires_in: number }
-  } catch (error) {
-    console.error("Error refreshing token:", error);
     throw error;
   }
 };
