@@ -50,7 +50,7 @@ router.get("/auth/callback", async (req, res) => {
     );
 
     const { access_token, refresh_token } = response.data;
-
+    console.log("YouTube tokens:", access_token, refresh_token);
     // Redirect user to frontend with tokens
     res.redirect(`${FRONTEND_URI}/#youtube_access_token=${access_token}&youtube_refresh_token=${refresh_token}`);
   } catch (error) {
@@ -87,24 +87,31 @@ router.get("/refresh_token", refreshTokens);
 
 const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => {
   const { query } = req.query;
-  if (!query) {
-    return res.status(400).json({ message: "Query is required" }); //TODO
-  }
+  if (!query) return res.status(400).json({ error: "Query is required" });
+
   try {
     const response = await axios.get(YOUTUBE_SEARCH_URL, {
       params: {
         q: query,
-        key: YOUTUBE_API_KEY,
+        key: YOUTUBE_API_KEY, // No need for OAuth token
         part: "snippet",
-        type: "video",
         maxResults: 1,
+        type: "video",
       },
     });
+
+    if (!response.data.items.length) {
+      return res.status(404).json({ error: "No YouTube video found for this query." });
+    }
+
     res.json(response.data.items[0]);
   } catch (error) {
-    console.error("Error searching YouTube:", error);
-    res.status(500).json({ error: "Failed to fetch video" });
-    return;
+    if (axios.isAxiosError(error)) {
+      console.error("YouTube Search API Error:", error.response?.data || error.message);
+    } else {
+      console.error("YouTube Search API Error:", error);
+    }
+    res.status(500).json({ error: "Failed to fetch YouTube video." });
   }
 };
 router.get("/search", youtubeSearch);

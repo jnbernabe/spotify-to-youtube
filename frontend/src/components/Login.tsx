@@ -1,33 +1,29 @@
 import React, { useEffect } from "react";
 import { Button } from "@mui/material";
-import { loginWithSpotify, loginWithYouTube } from "../api";
+import { loginWithSpotify } from "../api";
 
 interface LoginProps {
-  onLogin: (spotifyToken: string, youtubeToken: string) => void;
+  onLogin: (token: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   useEffect(() => {
+    // Extract token from URL hash
     const params = new URLSearchParams(window.location.hash.substring(1));
-    const spotifyToken = params.get("access_token");
-    const youtubeToken = params.get("youtube_access_token");
+    const token = params.get("access_token");
 
-    if (spotifyToken && youtubeToken) {
-      onLogin(spotifyToken, youtubeToken);
-      localStorage.setItem("spotify_access_token", spotifyToken);
-      localStorage.setItem("youtube_access_token", youtubeToken);
-      window.history.replaceState({}, document.title, "/dashboard");
+    if (token) {
+      onLogin(token);
+      localStorage.setItem("spotify_access_token", token); // Store token
+      window.history.replaceState({}, document.title, "/dashboard"); // Clean URL
     }
   }, [onLogin]);
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>Login to Spotify and YouTube</h2>
+      <h2>Login to Spotify</h2>
       <Button variant="contained" color="primary" onClick={loginWithSpotify}>
         Login with Spotify
-      </Button>
-      <Button variant="contained" color="secondary" onClick={loginWithYouTube} style={{ marginLeft: "10px" }}>
-        Login with YouTube
       </Button>
     </div>
   );

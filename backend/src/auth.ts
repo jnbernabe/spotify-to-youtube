@@ -56,6 +56,7 @@ router.get("/spotify/callback", async (req, res) => {
       }
     );
     const { access_token, refresh_token, expires_in } = response.data;
+    //console.log("Spotify tokens:", access_token, refresh_token, expires_in);
     res.redirect(`${FRONTEND_URI}/#access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`);
   } catch (error) {
     console.error("Error fetching token:", error);

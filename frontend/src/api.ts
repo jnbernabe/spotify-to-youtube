@@ -56,15 +56,16 @@ export const refreshSpotifyToken = async (refreshToken: string) => {
 
 // Redirect user to YouTube login
 export const loginWithYouTube = () => {
-  window.location.href = "http://localhost:5000/youtube/auth";
+  window.location.href = `${API_URL}/youtube/auth`;
 };
 
 // Refresh YouTube access token
 export const refreshYouTubeToken = async (refreshToken: string) => {
   try {
-    const response = await axios.get("http://localhost:5000/youtube/refresh_token", {
+    const response = await axios.get(`${API_URL}/youtube/refresh_token`, {
       params: { refresh_token: refreshToken },
     });
+
     return response.data.access_token;
   } catch (error) {
     console.error("Error refreshing YouTube token:", error);
@@ -72,24 +73,30 @@ export const refreshYouTubeToken = async (refreshToken: string) => {
   }
 };
 
-// Search for YouTube video by song name + artist
 export const searchYouTube = async (query: string) => {
   try {
+    if (!query) throw new Error("Missing search query for YouTube API");
+
     const response = await axios.get(`${API_URL}/youtube/search`, {
-      params: { query },
+      params: { query }, // Using public API key in the backend
     });
 
-    return response.data; // Returns YouTube video details
+    if (!response.data || !response.data.id || !response.data.id.videoId) {
+      console.warn("No valid YouTube video found for query:", query);
+      return null;
+    }
+
+    return response.data;
   } catch (error) {
-    console.error("Error searching YouTube:", error);
-    throw error;
+    console.error("Error searching YouTube:", error.response?.data || error.message);
+    return null;
   }
 };
 
-// Create YouTube Playlist
+// Create a YouTube playlist with the selected videos
 export const createYouTubePlaylist = async (title: string, videoIds: string[], token: string) => {
   try {
-    const response = await axios.post("http://localhost:5000/youtube/create-playlist", { title, videoIds, accessToken: token });
+    const response = await axios.post(`${API_URL}/youtube/create-playlist`, { title, videoIds, accessToken: token });
 
     return response.data; // Returns YouTube playlist ID
   } catch (error) {

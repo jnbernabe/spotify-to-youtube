@@ -3,25 +3,29 @@ import { fetchPlaylistTracks, searchYouTube, createYouTubePlaylist } from "../ap
 import { Button, List, ListItem, ListItemText, Typography, CircularProgress } from "@mui/material";
 
 interface YouTubePlaylistProps {
-  token: string;
+  youtubeToken: string | null;
+  spotifyToken: string | null;
   playlistId: string;
 }
 
-const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ token, playlistId }) => {
-  const [tracks, setTracks] = useState<{ name: string; artist: string; id: string }[]>([]);
+const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotifyToken, playlistId }) => {
+  const [tracks, setTracks] = useState<{ id: string; name: string; artist: string }[]>([]);
   const [videoIds, setVideoIds] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [playlistCreated, setPlaylistCreated] = useState<boolean>(false);
 
   useEffect(() => {
     const getTracksAndSearchYouTube = async () => {
+      if (!youtubeToken || !spotifyToken) return;
+
       try {
-        const spotifyTracks = await fetchPlaylistTracks(token, playlistId);
+        const spotifyTracks = await fetchPlaylistTracks(spotifyToken as string, playlistId);
         setTracks(spotifyTracks);
 
-        const videoResults = await Promise.all(spotifyTracks.map((track) => searchYouTube(`${track.name} ${track.artist} official music video`)));
+        const videoResults = await Promise.all(spotifyTracks.map((track: { id: string; name: string; artist: string }) => searchYouTube(`${track.name} ${track.artist} official music video`)));
 
-        const foundVideoIds = videoResults.map((video) => video?.id?.videoId).filter(Boolean);
+        const foundVideoIds = videoResults.map((video) => video?.id?.videoId).filter((id): id is string => Boolean(id));
+
         setVideoIds(foundVideoIds);
       } catch (error) {
         console.error("Error fetching tracks or searching YouTube:", error);
@@ -31,13 +35,21 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ token, playlistId }) 
     };
 
     getTracksAndSearchYouTube();
-  }, [token, playlistId]);
+  }, [spotifyToken, playlistId]);
 
   const handleCreatePlaylist = async () => {
-    if (videoIds.length === 0) return alert("No videos found."); //TODO: Replace with Snackbar
+    if (!youtubeToken) {
+      alert("You must authorize YouTube first.");
+      return;
+    }
+
+    if (videoIds.length === 0) {
+      alert("No videos found.");
+      return;
+    }
 
     try {
-      await createYouTubePlaylist("My YouTube To Spotify Playlist", videoIds, token);
+      await createYouTubePlaylist("My YouTube Playlist", videoIds, youtubeToken);
       setPlaylistCreated(true);
     } catch (error) {
       console.error("Error creating YouTube playlist:", error);
@@ -57,8 +69,9 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ token, playlistId }) 
           </ListItem>
         ))}
       </List>
+
       <Button variant="contained" color="primary" onClick={handleCreatePlaylist}>
-        Create YouTube Playlist
+        {youtubeToken ? "Create YouTube Playlist" : "Authorize YouTube First"}
       </Button>
     </div>
   );
