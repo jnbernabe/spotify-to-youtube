@@ -8,8 +8,8 @@ const router = express.Router();
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
-const REDIRECT_URI = process.env.PROD ? "https://spottotube.onrender.com/auth/spotify/callback" : "http://localhost:5000/auth/spotify/callback";
-const FRONTEND_URI = process.env.PROD ? "https://spottotube.netlify.app" : "http://localhost:5173"; // Redirect here after login
+const REDIRECT_URI = process.env.PROD ? `${process.env.PROD_BACK_END}/auth/spotify/callback` : `${process.env.LOCAL_BACK_END}/auth/spotify/callback`;
+const FRONTEND_URI = process.env.PROD ? `${process.env.PROD_FRONT_END}/` : `${process.env.LOCAL_FRONT_END}`;
 
 console.log("REDIRECT_URI", REDIRECT_URI);
 console.log("FRONTEND_URI", FRONTEND_URI);
@@ -59,7 +59,7 @@ router.get("/spotify/callback", async (req, res) => {
       }
     );
     const { access_token, refresh_token, expires_in } = response.data;
-    //console.log("Spotify tokens:", access_token, refresh_token, expires_in);
+    console.log("User Logged In with Spotify");
     res.redirect(`${FRONTEND_URI}/#access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`);
   } catch (error) {
     console.error("Error fetching token:", error);
@@ -89,6 +89,7 @@ const refreshToken: express.RequestHandler = async (req, res): Promise<any> => {
     );
 
     const { access_token, expires_in } = response.data;
+    console.log("Tokens Refreshed");
     res.json({ access_token, expires_in });
   } catch (error) {
     console.error("Error refreshing token:", error);
@@ -109,7 +110,7 @@ const spotifyPlaylists: express.RequestHandler = async (req, res): Promise<any> 
     const response = await axios.get("https://api.spotify.com/v1/me/playlists", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-
+    console.log("Playlists Fetched");
     res.json(response.data); // Send playlists data to frontend
   } catch (error) {
     console.error("Error fetching playlists:", error);
@@ -140,6 +141,7 @@ const playlistTracks: express.RequestHandler = async (req, res): Promise<any> =>
       name: item.track.name,
       artist: item.track.artists.map((artist: any) => artist.name).join(", "),
     }));
+    console.log("Tracks Fetched");
     res.json(tracks);
   } catch (error) {
     console.error("Error fetching playlist tracks:", error);

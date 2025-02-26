@@ -6,14 +6,13 @@ import querystring from "querystring";
 dotenv.config();
 
 const router = express.Router();
-
+const YOUTUBE_PLAYLIST_URL = "https://www.googleapis.com/youtube/v3/playlists";
+const YOUTUBE_PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
 const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY!;
-const YOUTUBE_REDIRECT_URI = process.env.PROD ? "https://spottotube.onrender.com/youtube/auth/callback" : process.env.YOUTUBE_REDIRECT_URI!;
-const YOUTUBE_PLAYLIST_URL = "https://www.googleapis.com/youtube/v3/playlists";
-const YOUTUBE_PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
-const FRONTEND_URI = process.env.PROD ? "https://spottotube.netlify.app" : "http://localhost:5173"; // Your frontend URL
+const YOUTUBE_REDIRECT_URI = process.env.PROD ? process.env.PROD_YOUTUBE_REDIRECT_URI : process.env.LOCAL_YOUTUBE_REDIRECT_URI!;
+const FRONTEND_URI = process.env.PROD ? process.env.PROD_FRONT_END : process.env.LOCAL_FRONT_END; //
 
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 
@@ -52,8 +51,9 @@ router.get("/auth/callback", async (req, res) => {
     );
 
     const { access_token, refresh_token } = response.data;
-    //console.log("YouTube tokens:", access_token, refresh_token);
+
     // Redirect user to frontend with tokens
+    console.log("User Logged In with Youtube");
     res.redirect(`${FRONTEND_URI}/dashboard?youtube_access_token=${access_token}&youtube_refresh_token=${refresh_token}`);
   } catch (error) {
     console.error("Error fetching YouTube token:", error);
@@ -78,6 +78,7 @@ const refreshTokens: express.RequestHandler = async (req, res): Promise<any> => 
     );
 
     const { access_token } = response.data;
+    console.log("Tokens Refreshed");
     res.json({ access_token });
   } catch (error) {
     console.error("Error refreshing YouTube token:", error);
@@ -95,7 +96,7 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => 
     const response = await axios.get(YOUTUBE_SEARCH_URL, {
       params: {
         q: query,
-        key: YOUTUBE_API_KEY, // No need for OAuth token
+        key: YOUTUBE_API_KEY,
         part: "snippet",
         maxResults: 1,
         type: "video",
@@ -105,7 +106,7 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => 
     if (!response.data.items.length) {
       return res.status(404).json({ error: "No YouTube video found for this query." });
     }
-
+    console.log("Found YouTube video");
     res.json(response.data.items[0]);
   } catch (error: any) {
     if (error.response.status === 403) {
@@ -119,15 +120,12 @@ router.get("/search", youtubeSearch);
 // Create a YouTube Playlist and Add Videos
 const createPlaylist: express.RequestHandler = async (req, res): Promise<any> => {
   const { title, videoIds, accessToken } = req.body;
-  //   console.log("title", title);
-  //   console.log("videoIds", videoIds);
-  //   console.log("accessToken", accessToken);
   if (!title || !videoIds || !accessToken) {
     return res.status(400).json({ error: "Missing required parameters" });
   }
 
   try {
-    // 1️⃣ **Step 1: Create Playlist**
+    // Step 1: Create Playlist**
     const createResponse = await axios.post(
       `${YOUTUBE_PLAYLIST_URL}?part=snippet`, // ✅ Corrected part parameter
       {
@@ -145,9 +143,9 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
     );
 
     const playlistId = createResponse.data.id;
-    console.log(`✅ Playlist Created: ${playlistId}`);
+    console.log(`Playlist Created: ${playlistId}`);
 
-    // 2️⃣ **Step 2: Add Videos to Playlist**
+    // Step 2: Add Videos to Playlist**
     for (const videoId of videoIds) {
       await axios.post(
         `${YOUTUBE_PLAYLIST_ITEMS_URL}?part=snippet`, // ✅ Corrected part parameter
@@ -169,7 +167,7 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
       );
     }
 
-    console.log("✅ All videos added to playlist.");
+    console.log("All videos added to playlist.");
     res.json({ success: true, playlistId, title });
   } catch (error: AxiosError | any) {
     console.error("YouTube API Error:", error.code, error.message, error.errors);

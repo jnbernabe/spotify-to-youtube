@@ -36,7 +36,7 @@ export const fetchPlaylistTracks = async (token: string, playlistId: string) => 
       name: item.track.name,
       artist: item.track.artists.map((artist: any) => artist.name).join(", "),
       album: item.track.album.name,
-      albumArt: item.track.album.images.length > 0 ? item.track.album.images[0].url : "", // ✅ Get album cover
+      albumArt: item.track.album.images.length > 0 ? item.track.album.images[0].url : "",
     }));
   } catch (error: any) {
     console.error("🚨 Error fetching Spotify playlist tracks:", error.response?.data || error.message);
@@ -50,7 +50,7 @@ export const refreshSpotifyToken = async (refreshToken: string) => {
       params: { refresh_token: refreshToken },
     });
 
-    return response.data; // { access_token: string, expires_in: number }
+    return response.data;
   } catch (error) {
     console.error("Error refreshing token:", error);
     throw error;
@@ -61,7 +61,6 @@ export const refreshSpotifyToken = async (refreshToken: string) => {
 
 // Redirect user to YouTube login
 export const loginWithYouTube = (playlistId: string, playlistName: string) => {
-  // ✅ Store the selected playlist in localStorage before redirecting
   localStorage.setItem("selectedPlaylistId", playlistId);
   localStorage.setItem("selectedPlaylistName", playlistName);
 
@@ -87,7 +86,7 @@ export const searchYouTube = async (query: string) => {
     if (!query) throw new Error("Missing search query for YouTube API");
 
     const response = await axios.get(`${API_URL}/youtube/search`, {
-      params: { query }, // Using public API key in the backend
+      params: { query },
     });
 
     if (!response.data || !response.data.id || !response.data.id.videoId) {
@@ -116,7 +115,7 @@ export const createYouTubePlaylist = async (title: string, videoIds: string[], a
     });
     const playlistID = response.data.playlistId;
 
-    return playlistID; // Returns YouTube playlist URL
+    return playlistID;
   } catch (error: any) {
     if (error.response?.status === 403) {
       return { error: "YouTube API limit exceeded" };
@@ -135,9 +134,9 @@ export const fetchPlaylistDetails = async (token: string, playlistId: string) =>
 
     return {
       id: response.data.id,
-      name: response.data.name, // ✅ Playlist name
-      description: response.data.description || "", // ✅ Optional description
-      owner: response.data.owner.display_name, // ✅ Playlist creator
+      name: response.data.name,
+      description: response.data.description || "",
+      owner: response.data.owner.display_name,
     };
   } catch (error: any) {
     console.error("🚨 Error fetching Spotify playlist details:", error.response?.data || error.message);
