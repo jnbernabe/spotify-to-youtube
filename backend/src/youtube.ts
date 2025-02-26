@@ -20,8 +20,8 @@ const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 router.get("/auth", (req, res) => {
   const scope = "https://www.googleapis.com/auth/youtube.force-ssl";
   const authUrl = `https://accounts.google.com/o/oauth2/auth?${querystring.stringify({
-    client_id: process.env.YOUTUBE_CLIENT_ID,
-    redirect_uri: process.env.YOUTUBE_REDIRECT_URI,
+    client_id: YOUTUBE_CLIENT_ID,
+    redirect_uri: YOUTUBE_REDIRECT_URI,
     response_type: "code",
     scope,
     access_type: "offline",
