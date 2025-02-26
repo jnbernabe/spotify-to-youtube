@@ -1,8 +1,7 @@
 import axios from "axios";
 import { AxiosError } from "axios";
-import { showToast } from "./components/Toast";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.PROD ? "https://your-backend-url.com" : "http://localhost:5000";
 
 export const loginWithSpotify = () => {
   window.location.href = `${API_URL}/auth/login`;
