@@ -1,7 +1,7 @@
 import axios from "axios";
 import { AxiosError } from "axios";
 
-const API_URL = import.meta.env.PROD ? "https://spottotube.onrender.com" : "http://localhost:5000";
+const API_URL = import.meta.env.PROD ? import.meta.env.VITE_API_URL : "http://localhost:5000";
 
 export const loginWithSpotify = () => {
   window.location.href = `${API_URL}/auth/login`;

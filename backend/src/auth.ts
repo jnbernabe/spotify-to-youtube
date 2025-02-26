@@ -8,8 +8,8 @@ const router = express.Router();
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
-const REDIRECT_URI = "http://localhost:5000/auth/spotify/callback";
-const FRONTEND_URI = "http://localhost:5173"; // Redirect here after login
+const REDIRECT_URI = process.env.PROD ? "https://spottotube.onrender.com/auth/spotify/callback" : "http://localhost:5000/auth/spotify/callback";
+const FRONTEND_URI = process.env.PROD ? "https://spottotube.netlify.app" : "http://localhost:5173"; // Redirect here after login
 
 const generateRandomString = (length: number) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
