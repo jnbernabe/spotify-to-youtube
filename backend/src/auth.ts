@@ -11,6 +11,9 @@ const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.PROD ? "https://spottotube.onrender.com/auth/spotify/callback" : "http://localhost:5000/auth/spotify/callback";
 const FRONTEND_URI = process.env.PROD ? "https://spottotube.netlify.app" : "http://localhost:5173"; // Redirect here after login
 
+console.log("REDIRECT_URI", REDIRECT_URI);
+console.log("FRONTEND_URI", FRONTEND_URI);
+
 const generateRandomString = (length: number) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from(crypto.getRandomValues(new Uint8Array(length)))
