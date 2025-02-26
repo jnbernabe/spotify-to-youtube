@@ -31,7 +31,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   alignItems: "center",
   justifyContent: "space-between",
   padding: theme.spacing(2),
-  height: "200px",
+  height: "15rem",
   background: "#222",
   color: "white",
   "&:hover": {
@@ -67,7 +67,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
     const getPlaylistTracks = async () => {
       try {
         const spotifyTracks = await fetchPlaylistTracks(spotifyToken, playlistId);
-        const formattedTracks = spotifyTracks.map((track) => ({
+        const formattedTracks = spotifyTracks.map((track: any) => ({
           id: track.id,
           name: track.name,
           artist: track.artist,
@@ -101,7 +101,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
 
   const handleCreatePlaylist = async () => {
     if (!youtubeToken) {
-      alert("You must authorize YouTube first.");
+      showToast("You must authorize YouTube first.", "info");
       return;
     }
 
@@ -112,7 +112,15 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
       const selectedTracks = tracks.filter((track) => track.selected);
 
       if (selectedTracks.length === 0) {
-        setError("No tracks selected. Please select at least one track.");
+        showToast("No tracks selected. Please select at least one track.", "error");
+        //setError("No tracks selected. Please select at least one track.");
+        setLoading(false);
+        return;
+      }
+
+      if (selectedTracks.length > 10) {
+        //setError("Please Select less than 10 tracks.");
+        showToast("Please Select less than 10 tracks.", "error");
         setLoading(false);
         return;
       }
@@ -134,8 +142,8 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
         return;
       }
 
-      const playlistUrl = await createYouTubePlaylist(playlistName, validVideoIds, youtubeToken);
-      setYouTubePlaylistUrl(playlistUrl);
+      const playlistId = await createYouTubePlaylist(playlistName, validVideoIds, youtubeToken);
+      setYouTubePlaylistUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
       setPlaylistCreated(true);
       showToast("YouTube Playlist Created Successfully!", "success");
     } catch (error: any) {
@@ -149,20 +157,12 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5, ease: "easeOut" }}>
       <Box sx={{ maxWidth: "900px", margin: "auto", padding: 2 }}>
-        <Typography variant="h6" align="center">
-          Select Songs from:
-        </Typography>
         <Typography variant="h4" align="center" gutterBottom>
           {playlistName}
         </Typography>
-
-        {error && <Typography color="error">{error}</Typography>}
-        {loading && <CircularProgress />}
-        {playlistCreated && (
-          <Typography variant="h6" color="success">
-            ✅ YouTube Playlist Created!
-          </Typography>
-        )}
+        <Typography variant="h6" align="center">
+          Select up to 10 Songs
+        </Typography>
 
         <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
           {/* <Typography variant="h6">Select Tracks:</Typography> */}
@@ -172,12 +172,25 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
             </Button>
           ) : (
             <>
-              <Button align="center" variant="contained" color="primary" onClick={handleCreatePlaylist} disabled={loading || playlistCreated} sx={{ marginBottom: 2 }}>
+              <Button variant="contained" color="primary" onClick={handleCreatePlaylist} disabled={loading || playlistCreated} sx={{ marginBottom: 2 }}>
                 {loading ? "Creating Playlist..." : "Create YouTube Playlist"}
               </Button>
             </>
           )}
-          <Button variant="outlined" onClick={() => setTracks(tracks.map((track) => ({ ...track, selected: !track.selected })))}>
+          {error && (
+            <Typography color="error" align="center">
+              {error}
+            </Typography>
+          )}
+          {loading && <CircularProgress />}
+
+          {/* ✅ Button to View YouTube Playlist */}
+          {playlistCreated && youtubePlaylistUrl && (
+            <Button variant="contained" color="primary" href={youtubePlaylistUrl} target="_blank" sx={{ marginBottom: 2 }}>
+              View Your YouTube Playlist
+            </Button>
+          )}
+          <Button variant="outlined" sx={{ marginBottom: 2 }} onClick={() => setTracks(tracks.map((track) => ({ ...track, selected: !track.selected })))}>
             {tracks.every((track) => track.selected) ? "Deselect All" : "Select All"}
           </Button>
         </Box>
@@ -188,7 +201,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 200, damping: 10 }}>
                 <StyledCard>
                   <Checkbox checked={track.selected} onChange={() => handleTrackToggle(track.id)} icon={<CheckBoxOutlineBlankIcon />} checkedIcon={<CheckBoxIcon />} />
-                  <CardMedia component="img" image={track.albumArt} alt={track.name} sx={{ width: 60, height: 60, marginRight: 2, borderRadius: 1 }} />
+                  <CardMedia component="img" image={track.albumArt} alt={track.name} sx={{ width: 100, height: 100, marginRight: 2, borderRadius: 1 }} />
                   <CardContent sx={{ padding: 1 }}>
                     <Typography variant="body1" fontWeight="bold">
                       {track.name}
@@ -202,14 +215,6 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
             </Grid>
           ))}
         </Grid>
-        {/* ✅ Button to View YouTube Playlist */}
-        {playlistCreated && youtubePlaylistUrl && (
-          <Box sx={{ textAlign: "center", marginTop: 3 }}>
-            <Button variant="contained" color="primary" href={youtubePlaylistUrl} target="_blank">
-              View Your YouTube Playlist
-            </Button>
-          </Box>
-        )}
       </Box>
     </motion.div>
   );

@@ -115,8 +115,9 @@ export const createYouTubePlaylist = async (title: string, videoIds: string[], a
       videoIds,
       accessToken,
     });
-    const playlistID = response.data.id;
-    return `https://www.youtube.com/playlist?list=${playlistID}`; // Returns YouTube playlist URL
+    const playlistID = response.data.playlistId;
+
+    return playlistID; // Returns YouTube playlist URL
   } catch (error: any) {
     if (error.response?.status === 403) {
       return { error: "YouTube API limit exceeded" };
