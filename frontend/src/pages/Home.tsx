@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Button, Container, Typography } from "@mui/material";
+import { Box, Button, Container, Typography } from "@mui/material";
 import { loginWithSpotify } from "../api";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -14,6 +14,7 @@ const HeroContainer = styled(Container)(() => ({
   alignItems: "center",
   justifyContent: "center",
   height: "100vh",
+  width: "100%",
   textAlign: "center",
   background: `linear-gradient(135deg, rgba(30,30,30,0.9), rgba(15,15,15,0.95)))`,
   backgroundSize: "cover",
@@ -65,6 +66,18 @@ const Home: React.FC<HomeProps> = ({ onLogin }) => {
         <Typography variant="h5" sx={{ mt: 2, maxWidth: "600px", mx: "auto" }}>
           Easily transfer your favorite songs from Spotify to a YouTube playlist with just a few clicks.
         </Typography>
+        <Typography variant="h5" sx={{ mt: 2, maxWidth: "600px", mx: "auto" }}>
+          Youtube Demo
+        </Typography>
+        <Box sx={{ mt: 4 }}>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/2f_WMaRrwEo?si=LKD0YAfJLnfTRJXJ"
+            title="YouTube video player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          ></iframe>
+        </Box>
       </motion.div>
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.3 }}>
         <StyledButton variant="contained" onClick={loginWithSpotify}>

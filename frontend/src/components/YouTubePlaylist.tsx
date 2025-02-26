@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchPlaylistTracks, searchYouTube, createYouTubePlaylist, loginWithYouTube } from "../api";
-import { Button, Grid, Card, CardMedia, CardContent, Typography, CircularProgress, Checkbox, Box } from "@mui/material";
+import { Button, Grid, Card, CardMedia, CardContent, Typography, CircularProgress, Box } from "@mui/material";
 import { motion } from "framer-motion";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "../components/Toast";
 import { styled } from "@mui/material/styles";
@@ -25,7 +23,7 @@ interface Track {
   selected: boolean;
 }
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Card)<{ selected: boolean }>(({ theme, selected }) => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -34,6 +32,10 @@ const StyledCard = styled(Card)(({ theme }) => ({
   height: "15rem",
   background: "#222",
   color: "white",
+  cursor: "pointer",
+  border: selected ? "3px solid #1DB954" : "1px solid #333",
+  boxShadow: selected ? "0px 0px 15px #1DB954" : "none",
+  transition: "all 0.3s ease",
   "&:hover": {
     transform: "scale(1.03)",
     transition: "transform 0.3s ease",
@@ -77,7 +79,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
         }));
         setTracks(formattedTracks);
       } catch (error) {
-        console.error("🚨 Error fetching Spotify tracks:", error);
+        console.error("Error fetching Spotify tracks:", error);
         showToast("Failed to load Spotify playlist!", "error");
       }
     };
@@ -199,10 +201,10 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
           {filteredTracks.map((track) => (
             <Grid item xs={12} sm={6} md={4} key={track.id}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 200, damping: 10 }}>
-                <StyledCard>
-                  <Checkbox checked={track.selected} onChange={() => handleTrackToggle(track.id)} icon={<CheckBoxOutlineBlankIcon />} checkedIcon={<CheckBoxIcon />} />
+                <StyledCard selected={track.selected} onClick={() => handleTrackToggle(track.id)}>
+                  {/* <Checkbox checked={track.selected} onChange={() => handleTrackToggle(track.id)} icon={<CheckBoxOutlineBlankIcon />} checkedIcon={<CheckBoxIcon />} /> */}
                   <CardMedia component="img" image={track.albumArt} alt={track.name} sx={{ width: 100, height: 100, marginRight: 2, borderRadius: 1 }} />
-                  <CardContent sx={{ padding: 1 }}>
+                  <CardContent sx={{ textAlign: "center" }}>
                     <Typography variant="body1" fontWeight="bold">
                       {track.name}
                     </Typography>
