@@ -17,7 +17,7 @@ const FRONTEND_URI = process.env.PROD ? process.env.PROD_FRONT_END : process.env
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 
 router.get("/auth", (req, res) => {
-  const scope = "https://www.googleapis.com/auth/youtube.force-ssl";
+  const scope = "https://www.googleapis.com/auth/youtube";
   const authUrl = `https://accounts.google.com/o/oauth2/auth?${querystring.stringify({
     client_id: YOUTUBE_CLIENT_ID,
     redirect_uri: YOUTUBE_REDIRECT_URI,
