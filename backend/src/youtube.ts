@@ -9,8 +9,8 @@ const router = express.Router();
 
 const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
-const YOUTUBE_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY!;
+const YOUTUBE_REDIRECT_URI = process.env.PROD ? "https://spottotube.onrender.com/youtube/auth/callback" : process.env.YOUTUBE_REDIRECT_URI!;
 const YOUTUBE_PLAYLIST_URL = "https://www.googleapis.com/youtube/v3/playlists";
 const YOUTUBE_PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
 const FRONTEND_URI = process.env.PROD ? "https://spottotube.netlify.app" : "http://localhost:5173"; // Your frontend URL
