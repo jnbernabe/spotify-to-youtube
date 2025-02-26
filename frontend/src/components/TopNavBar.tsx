@@ -46,7 +46,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ onLogout, onSearchChange, onGoToP
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-          SpotToTube
+          STMV
         </Typography>
         <Button color="inherit" onClick={onGoToPlaylists}>
           Playlists

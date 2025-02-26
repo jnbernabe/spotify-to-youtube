@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://spottotube.onrender.com", // Replace with your backend URL "https://spottotube.netlify.app",
+        target: "https://STMV.onrender.com",
         changeOrigin: true,
         secure: true,
       },

@@ -1,4 +1,4 @@
-# SpotToTube
+#STMV
 
 A web application that allows users to search for YouTube videos and add them to Spotify playlists.
 
