@@ -11,7 +11,7 @@ interface Playlist {
 }
 
 interface PlaylistSelectorProps {
-  token: string;
+  token: string | null;
   onSelect: (playlistId: string, playlistName: string) => void;
   searchQuery: string;
 }
@@ -23,7 +23,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
   useEffect(() => {
     const getPlaylists = async () => {
       try {
-        const userPlaylists = await fetchPlaylists(token);
+        const userPlaylists = await fetchPlaylists(token as string);
         setPlaylists(userPlaylists);
       } catch (error) {
         console.error("🚨 Error fetching playlists:", error);

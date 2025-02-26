@@ -10,7 +10,7 @@ import { styled } from "@mui/material/styles";
 
 interface YouTubePlaylistProps {
   youtubeToken: string | null;
-  spotifyToken: string;
+  spotifyToken: string | null;
   playlistId: string;
   playlistName: string;
   searchQuery: string;
@@ -66,7 +66,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
   useEffect(() => {
     const getPlaylistTracks = async () => {
       try {
-        const spotifyTracks = await fetchPlaylistTracks(spotifyToken, playlistId);
+        const spotifyTracks = await fetchPlaylistTracks(spotifyToken as string, playlistId);
         const formattedTracks = spotifyTracks.map((track: any) => ({
           id: track.id,
           name: track.name,

@@ -1,15 +1,14 @@
 import React, { useEffect } from "react";
-import { Button, Container, Typography, Box } from "@mui/material";
+import { Button, Container, Typography } from "@mui/material";
 import { loginWithSpotify } from "../api";
 import { useNavigate } from "react-router-dom";
-import { showToast } from "../components/Toast";
 import { motion } from "framer-motion";
 import { styled } from "@mui/material/styles";
 
 interface HomeProps {
   onLogin: (spotifyToken: string) => void;
 }
-const HeroContainer = styled(Container)(({ theme }) => ({
+const HeroContainer = styled(Container)(() => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",

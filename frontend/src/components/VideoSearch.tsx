@@ -20,7 +20,7 @@ const VideoSearch: React.FC<{ onSelect: (videoId: string) => void }> = ({ onSele
       <Button onClick={handleSearch}>Search</Button>
       {video && (
         <List>
-          <ListItem button onClick={() => onSelect(video.id)}>
+          <ListItem component="button" onClick={() => onSelect(video.id)}>
             <ListItemText primary={video.title} />
           </ListItem>
         </List>

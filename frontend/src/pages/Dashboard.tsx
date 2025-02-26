@@ -5,10 +5,9 @@ import TopNavBar from "../components/TopNavBar";
 import { Box } from "@mui/material";
 import { fetchPlaylistDetails } from "../api";
 import { motion, AnimatePresence } from "framer-motion";
-import { showToast } from "../components/Toast";
 
 interface DashboardProps {
-  spotifyToken: string;
+  spotifyToken: string | null;
   youtubeToken: string | null;
   onLogout: () => void;
 }
@@ -35,7 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ spotifyToken, youtubeToken, onLog
 
   useEffect(() => {
     if (selectedPlaylist) {
-      fetchPlaylistDetails(spotifyToken, selectedPlaylist).then((playlist) => {
+      fetchPlaylistDetails(spotifyToken as string, selectedPlaylist).then((playlist) => {
         setSelectedPlaylistName(playlist.name);
       });
     }

@@ -19,7 +19,7 @@ export const fetchPlaylists = async (token: string) => {
       image: playlist.images.length > 0 ? playlist.images[0].url : "",
       totalTracks: playlist.tracks.total,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error("🚨 Error fetching playlists:", error.response?.data || error.message);
     throw error;
   }
