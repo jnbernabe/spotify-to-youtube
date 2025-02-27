@@ -49,26 +49,32 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
         <Typography variant="h4" align="center" gutterBottom>
           Select a Playlist
         </Typography>
-        {loading && <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />}
-        <Grid container spacing={3}>
-          {filteredPlaylists.map((playlist) => (
-            <Grid item xs={12} sm={6} md={4} key={playlist.id}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 200, damping: 10 }}>
-                <Card onClick={() => onSelect(playlist.id, playlist.name)} sx={{ cursor: "pointer", backgroundColor: "#1a1a1a" }}>
-                  <CardMedia component="img" image={playlist.image || "/default_playlist.png"} alt={playlist.name} sx={{ height: 160 }} />
-                  <CardContent>
-                    <Typography variant="body1" fontWeight="bold" color="white">
-                      {playlist.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {playlist.totalTracks} Tracks
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
+            <Typography variant="body1">Starting Server & Loading Playlists...</Typography>
+            <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            {filteredPlaylists.map((playlist) => (
+              <Grid item xs={12} sm={6} md={4} key={playlist.id}>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 200, damping: 10 }}>
+                  <Card onClick={() => onSelect(playlist.id, playlist.name)} sx={{ cursor: "pointer", backgroundColor: "#1a1a1a" }}>
+                    <CardMedia component="img" image={playlist.image || "/default_playlist.png"} alt={playlist.name} sx={{ height: 160 }} />
+                    <CardContent>
+                      <Typography variant="body1" fontWeight="bold" color="white">
+                        {playlist.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {playlist.totalTracks} Tracks
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Box>
     </motion.div>
   );
