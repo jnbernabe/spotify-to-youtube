@@ -27,5 +27,3 @@ The application is currently hosted on Netlify and can be accessed at: [https://
 ### YouTube Demo
 
 A link to a video demonstrating the application is shown here: [STMV Demo](https://www.youtube.com/watch?v=2f_WMaRrwEo)
-
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=2f_WMaRrwEo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
