@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 import { showToast } from "./components/Toast";
 
 const API_URL = import.meta.env.PROD ? import.meta.env.VITE_API_URL : "http://localhost:5000";
-const FRONTEND_URI = import.meta.env.PROD ? import.meta.env.VITE_FRONTEND_URL : "http://localhost:5173";
+//const FRONTEND_URI = import.meta.env.PROD ? import.meta.env.VITE_FRONTEND_URL : "http://localhost:5173";
 
 export const loginWithSpotify = () => {
   showToast("Redirecting to Spotify...", "info");
