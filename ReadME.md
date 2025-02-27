@@ -24,12 +24,8 @@ The application is currently in development and is not yet ready for production 
 
 The application is currently hosted on Netlify and can be accessed at: [https://stmv.netlify.app/](https://stmv.netlify.app/)
 
-## Demo
-
-The application is currently hosted on Netlify and can be accessed at: [https://stmv.netlify.app/](https://stmv.netlify.app/)
-
 ### YouTube Demo
 
-An embedded video demonstrating the application is shown below:
+A link to a video demonstrating the application is shown here: [STMV Demo](https://www.youtube.com/watch?v=2f_WMaRrwEo)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/watch?v=2f_WMaRrwEo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
