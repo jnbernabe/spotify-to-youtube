@@ -12,7 +12,7 @@ export const loginWithSpotify = () => {
 
 export const fetchPlaylists = async (token: string) => {
   try {
-    const response = await axios.get("https://api.spotify.com/v1/me/playlists", {
+    const response = await axios.get(`${API_URL}/auth/playlists`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -30,17 +30,11 @@ export const fetchPlaylists = async (token: string) => {
 
 export const fetchPlaylistTracks = async (token: string, playlistId: string) => {
   try {
-    const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    const response = await axios.get(`${API_URL}/auth/playlists/${playlistId}/tracks`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    return response.data.items.map((item: any) => ({
-      id: item.track.id,
-      name: item.track.name,
-      artist: item.track.artists.map((artist: any) => artist.name).join(", "),
-      album: item.track.album.name,
-      albumArt: item.track.album.images.length > 0 ? item.track.album.images[0].url : "",
-    }));
+    return response.data;
   } catch (error: any) {
     console.error("🚨 Error fetching Spotify playlist tracks:", error.response?.data || error.message);
     throw error;

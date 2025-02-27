@@ -2,6 +2,7 @@ import express from "express";
 import axios, { Axios, AxiosError } from "axios";
 import dotenv from "dotenv";
 import querystring from "querystring";
+import logger from "./winston";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ router.get("/auth", (req, res) => {
     prompt: "consent",
   })}`;
 
+  logger.info("Redirecting to Google OAuth");
   res.redirect(authUrl);
 });
 
@@ -34,6 +36,7 @@ router.get("/auth/callback", async (req, res) => {
   const code = req.query.code as string;
 
   if (!code) {
+    logger.warn("Missing authorization code");
     return res.redirect(`${FRONTEND_URI}/?error=authorization_failed`);
   }
 
@@ -53,17 +56,20 @@ router.get("/auth/callback", async (req, res) => {
     const { access_token, refresh_token } = response.data;
 
     // Redirect user to frontend with tokens
-    console.log("User Logged In with Youtube");
+    logger.info("User Logged In with Youtube");
     res.redirect(`${FRONTEND_URI}/dashboard?youtube_access_token=${access_token}&youtube_refresh_token=${refresh_token}`);
   } catch (error) {
-    console.error("Error fetching YouTube token:", error);
+    logger.error("Error fetching YouTube token:", error);
     res.redirect(`${FRONTEND_URI}/?error=token_fetch_failed`);
   }
 });
 
 const refreshTokens: express.RequestHandler = async (req, res): Promise<any> => {
   const refreshToken = req.query.refresh_token as string;
-  if (!refreshToken) return res.status(400).json({ error: "Missing refresh token" });
+  if (!refreshToken) {
+    logger.warn("Missing refresh token");
+    return res.status(400).json({ error: "Missing refresh token" });
+  }
 
   try {
     const response = await axios.post(
@@ -78,11 +84,11 @@ const refreshTokens: express.RequestHandler = async (req, res): Promise<any> => 
     );
 
     const { access_token } = response.data;
-    console.log("Tokens Refreshed");
+    logger.info("Youtube Token Refreshed");
     res.json({ access_token });
-  } catch (error) {
-    console.error("Error refreshing YouTube token:", error);
-    res.status(500).json({ error: "Failed to refresh token" });
+  } catch (error: AxiosError | any) {
+    logger.error("Error refreshing token");
+    res.status(error.response.status).json({ error: "Failed to refresh token" });
   }
 };
 
@@ -90,7 +96,10 @@ router.get("/refresh_token", refreshTokens);
 
 const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => {
   const { query } = req.query;
-  if (!query) return res.status(400).json({ error: "Query is required" });
+  if (!query) {
+    logger.warn("No query provided");
+    return res.status(400).json({ error: "Query is required" });
+  }
 
   try {
     const response = await axios.get(YOUTUBE_SEARCH_URL, {
@@ -104,14 +113,18 @@ const youtubeSearch: express.RequestHandler = async (req, res): Promise<any> => 
     });
 
     if (!response.data.items.length) {
+      logger.warn("No YouTube video found for this query");
       return res.status(404).json({ error: "No YouTube video found for this query." });
     }
-    console.log("Found YouTube video");
+    logger.info("Found YouTube video");
     res.json(response.data.items[0]);
   } catch (error: any) {
     if (error.response.status === 403) {
+      logger.error("YouTube API limit exceeded");
       return res.status(403).json({ error: "403 Forbidden. YouTube API limit exceeded." });
     }
+
+    logger.error("Error searching YouTube");
     res.status(500).json({ error: "Failed to fetch YouTube video." });
   }
 };
@@ -121,6 +134,7 @@ router.get("/search", youtubeSearch);
 const createPlaylist: express.RequestHandler = async (req, res): Promise<any> => {
   const { title, videoIds, accessToken } = req.body;
   if (!title || !videoIds || !accessToken) {
+    logger.warn("Missing required parameters");
     return res.status(400).json({ error: "Missing required parameters" });
   }
 
@@ -143,7 +157,7 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
     );
 
     const playlistId = createResponse.data.id;
-    console.log(`Playlist Created: ${playlistId}`);
+    logger.info(`Playlist Created: ${playlistId}`);
 
     // Step 2: Add Videos to Playlist**
     for (const videoId of videoIds) {
@@ -167,12 +181,11 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
       );
     }
 
-    console.log("All videos added to playlist.");
+    logger.info("All videos added to playlist.");
     res.json({ success: true, playlistId, title });
   } catch (error: AxiosError | any) {
-    console.error("YouTube API Error:", error.code, error.message, error.errors);
-    //console.error("Failed to create YouTube playlist:", error.data);
-    res.status(500).json({ error: error.response?.data || error.message });
+    logger.error("Error creating playlist");
+    res.status(error.response.status).json({ error: error.response?.data || error.message });
   }
 };
 router.post("/create-playlist", createPlaylist);

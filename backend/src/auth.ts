@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import querystring from "querystring";
 import dotenv from "dotenv";
+import logger from "./winston";
 require("dotenv").config();
 
 const router = express.Router();
@@ -11,8 +12,8 @@ const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.PROD ? `${process.env.PROD_BACK_END}/auth/spotify/callback` : `${process.env.LOCAL_BACK_END}/auth/spotify/callback`;
 const FRONTEND_URI = process.env.PROD ? `${process.env.PROD_FRONT_END}/` : `${process.env.LOCAL_FRONT_END}`;
 
-console.log("REDIRECT_URI", REDIRECT_URI);
-console.log("FRONTEND_URI", FRONTEND_URI);
+logger.info("REDIRECT_URI", process.env.LOCAL_BACK_END);
+logger.info("FRONTEND_URI", FRONTEND_URI);
 
 const generateRandomString = (length: number) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -40,6 +41,7 @@ router.get("/spotify/callback", async (req, res) => {
   const tokenUrl = "https://accounts.spotify.com/api/token";
 
   if (!code) {
+    logger.warn("Missing authorization code");
     return res.redirect(`${FRONTEND_URI}/?error=authorization_failed`);
   }
 
@@ -59,10 +61,10 @@ router.get("/spotify/callback", async (req, res) => {
       }
     );
     const { access_token, refresh_token, expires_in } = response.data;
-    console.log("User Logged In with Spotify");
+    logger.info("User Logged In with Spotify");
     res.redirect(`${FRONTEND_URI}/#access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`);
   } catch (error) {
-    console.error("Error fetching token:", error);
+    logger.error("Error fetching Spotify token");
     res.redirect(`${FRONTEND_URI}/?error=token_fetch_failed`);
   }
 });
@@ -70,6 +72,7 @@ router.get("/spotify/callback", async (req, res) => {
 const refreshToken: express.RequestHandler = async (req, res): Promise<any> => {
   const refresh_token = req.query.refresh_token as string;
   if (!refresh_token) {
+    logger.warn("Missing refresh token");
     return res.status(400).json({ error: "Missing refresh token" });
   }
 
@@ -89,10 +92,10 @@ const refreshToken: express.RequestHandler = async (req, res): Promise<any> => {
     );
 
     const { access_token, expires_in } = response.data;
-    console.log("Spotify Token Refreshed");
+    logger.info("Spotify Token Refreshed");
     res.json({ access_token, expires_in });
   } catch (error) {
-    console.error("Error refreshing token:", error);
+    logger.error("Error refreshing token");
     res.status(500).json({ error: "Failed to refresh token" });
   }
 };
@@ -103,17 +106,20 @@ const spotifyPlaylists: express.RequestHandler = async (req, res): Promise<any> 
   const accessToken = req.headers.authorization; // Get token from request headers
 
   if (!accessToken) {
+    logger.error("No access token provided");
     return res.status(401).json({ error: "No access token provided" });
   }
 
   try {
+    // Fetch user's playlists
+    logger.info("Fetching Playlists from Spotify API");
     const response = await axios.get("https://api.spotify.com/v1/me/playlists", {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `${accessToken}` },
     });
-    console.log("Playlists Fetched");
+    logger.info("Playlists Fetched");
     res.json(response.data); // Send playlists data to frontend
   } catch (error) {
-    console.error("Error fetching playlists:", error);
+    logger.error("Error fetching playlists");
     res.status(500).json({ error: "Failed to fetch playlists" });
   }
 };
@@ -124,14 +130,16 @@ const playlistTracks: express.RequestHandler = async (req, res): Promise<any> =>
   const { playlistId } = req.params;
   const accessToken = req.headers.authorization;
   if (!accessToken) {
+    logger.error("No access token provided");
     return res.status(401).json({ error: "No access token provided" });
   }
   if (!playlistId) {
-    console.error("Error: Playlist ID is undefined in backend request");
+    logger.error("Playlist ID is required");
     return res.status(400).json({ error: "Playlist ID is required" });
   }
 
   try {
+    logger.info("Fetching Playlist Tracks from Spotify API");
     const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
       headers: { Authorization: `${accessToken}` },
     });
@@ -140,15 +148,18 @@ const playlistTracks: express.RequestHandler = async (req, res): Promise<any> =>
       id: item.track.id,
       name: item.track.name,
       artist: item.track.artists.map((artist: any) => artist.name).join(", "),
+      album: item.track.album.name,
+      albumArt: item.track.album.images.length > 0 ? item.track.album.images[0].url : "",
     }));
-    console.log("Tracks Fetched");
+
+    logger.info("Playlist Tracks Fetched");
     res.json(tracks);
   } catch (error) {
-    console.error("Error fetching playlist tracks:", error);
+    logger.error("Error fetching playlist tracks");
     res.status(500).json({ error: "Failed to fetch playlist tracks" });
   }
 };
 
-router.get("/playlist/:playlistId/tracks", playlistTracks);
+router.get("/playlists/:playlistId/tracks", playlistTracks);
 
 export default router;
