@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchPlaylists } from "../api";
 import { Grid, Card, CardMedia, CardContent, Typography, CircularProgress, Box } from "@mui/material";
 import { motion } from "framer-motion";
+import { showToast } from "./Toast";
 
 interface Playlist {
   id: string;
@@ -23,10 +24,13 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
   useEffect(() => {
     const getPlaylists = async () => {
       try {
+        setLoading(true);
+        showToast("Fetching playlists...", "info");
         const userPlaylists = await fetchPlaylists(token as string);
         setPlaylists(userPlaylists);
       } catch (error) {
         console.error("🚨 Error fetching playlists:", error);
+        showToast("Failed to fetch playlists", "error");
       } finally {
         setLoading(false);
       }
@@ -45,7 +49,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
         <Typography variant="h4" align="center" gutterBottom>
           Select a Playlist
         </Typography>
-
+        {loading && <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />}
         <Grid container spacing={3}>
           {filteredPlaylists.map((playlist) => (
             <Grid item xs={12} sm={6} md={4} key={playlist.id}>

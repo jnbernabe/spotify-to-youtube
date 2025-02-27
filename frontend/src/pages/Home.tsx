@@ -13,13 +13,13 @@ const HeroContainer = styled(Container)(() => ({
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  height: "100vh",
-  width: "100%",
+  height: "100%",
   textAlign: "center",
   background: `linear-gradient(135deg, rgba(30,30,30,0.9), rgba(15,15,15,0.95)))`,
   backgroundSize: "cover",
   backgroundPosition: "center",
   color: "white",
+  padding: "2rem",
 }));
 
 const StyledButton = styled(Button)(({ theme }) => ({
@@ -71,11 +71,11 @@ const Home: React.FC<HomeProps> = ({ onLogin }) => {
         </Typography>
         <Box sx={{ mt: 4 }}>
           <iframe
-            width="560"
-            height="315"
+            style={{ border: "none", borderRadius: "8px", width: "100%", height: "30rem" }}
             src="https://www.youtube.com/embed/2f_WMaRrwEo?si=LKD0YAfJLnfTRJXJ"
-            title="YouTube video player"
+            title="STMV Demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
           ></iframe>
         </Box>
       </motion.div>

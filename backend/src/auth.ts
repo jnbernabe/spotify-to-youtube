@@ -89,7 +89,7 @@ const refreshToken: express.RequestHandler = async (req, res): Promise<any> => {
     );
 
     const { access_token, expires_in } = response.data;
-    console.log("Tokens Refreshed");
+    console.log("Spotify Token Refreshed");
     res.json({ access_token, expires_in });
   } catch (error) {
     console.error("Error refreshing token:", error);

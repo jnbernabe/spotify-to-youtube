@@ -1,9 +1,12 @@
 import axios from "axios";
 import { AxiosError } from "axios";
+import { showToast } from "./components/Toast";
 
 const API_URL = import.meta.env.PROD ? import.meta.env.VITE_API_URL : "http://localhost:5000";
+const FRONTEND_URI = import.meta.env.PROD ? import.meta.env.VITE_FRONTEND_URL : "http://localhost:5173";
 
 export const loginWithSpotify = () => {
+  showToast("Redirecting to Spotify...", "info");
   window.location.href = `${API_URL}/auth/login`;
 };
 
@@ -49,7 +52,7 @@ export const refreshSpotifyToken = async (refreshToken: string) => {
     const response = await axios.get(`${API_URL}/auth/refresh_token`, {
       params: { refresh_token: refreshToken },
     });
-
+    console.log("Spotify Token Refreshed");
     return response.data;
   } catch (error) {
     console.error("Error refreshing token:", error);

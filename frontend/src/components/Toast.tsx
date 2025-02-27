@@ -3,17 +3,16 @@ import "react-toastify/dist/ReactToastify.css";
 
 const toastStyles: ToastOptions = {
   theme: "dark",
-  position: "top-right",
-  autoClose: 3000,
-  hideProgressBar: true,
+  position: "bottom-right",
+  hideProgressBar: false,
   closeOnClick: true,
   pauseOnHover: true,
-  draggable: true,
+  draggable: false,
   progress: undefined,
 };
 
 // ✅ Custom Toast Messages
-export const showToast = (message: string, type: "success" | "error" | "info") => {
+export const showToast = (message: string, type: "success" | "error" | "info", timeout: number = 2000) => {
   const styleOverrides = {
     success: { background: "#1a1a1a", color: "#4CAF50" },
     error: { background: "#1a1a1a", color: "#FF5252" },
@@ -25,8 +24,8 @@ export const showToast = (message: string, type: "success" | "error" | "info") =
     style: styleOverrides[type],
     closeButton: true,
     position: "bottom-right",
-    autoClose: 3000,
-    hideProgressBar: true,
+    autoClose: timeout,
+    hideProgressBar: false,
     closeOnClick: true,
     pauseOnHover: true,
     draggable: true,
