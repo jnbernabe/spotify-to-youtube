@@ -72,7 +72,7 @@ const Home: React.FC<HomeProps> = ({ onLogin }) => {
         <Box sx={{ mt: 4 }}>
           <iframe
             style={{ border: "none", borderRadius: "8px", width: "100%", height: "30rem" }}
-            src="https://www.youtube.com/embed/2f_WMaRrwEo?si=LKD0YAfJLnfTRJXJ"
+            src="https://www.youtube.com/embed/eLPaxf4Fg5I?si=Sr7OtvOyT1rrF_Wz"
             title="STMV Demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen

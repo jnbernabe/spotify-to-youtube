@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchPlaylistTracks, searchYouTube, createYouTubePlaylist, loginWithYouTube } from "../api";
-import { Button, Grid, Card, CardMedia, CardContent, Typography, Box } from "@mui/material";
+import { Button, Grid, Card, CardMedia, CardContent, Typography, Box, ButtonGroup } from "@mui/material";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "../components/Toast";
@@ -131,7 +131,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
 
       if (selectedTracks.length > 10) {
         //setError("Please Select less than 10 tracks.");
-        showToast("Please Select less than 10 tracks.", "error");
+        showToast("Please select less than 10 tracks.", "error");
         setLoading(false);
         return;
       }
@@ -189,18 +189,20 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
             </Button>
           ) : (
             <>
-              <Button variant="contained" color="primary" onClick={handleCreatePlaylist} disabled={loading || playlistCreated} sx={{ marginBottom: 2 }}>
-                {loading ? "Creating Playlist..." : "Create YouTube Playlist"}
-              </Button>
+              <ButtonGroup>
+                <Button variant="contained" color="primary" onClick={handleCreatePlaylist} disabled={loading || playlistCreated} sx={{ marginBottom: 2 }}>
+                  {loading ? "Creating Playlist..." : "Create YouTube Playlist"}
+                </Button>
+                {/* ✅ Button to View YouTube Playlist */}
+                {playlistCreated && youtubePlaylistUrl && (
+                  <Button variant="contained" color="primary" href={youtubePlaylistUrl} target="_blank" sx={{ marginBottom: 2 }}>
+                    View Your YouTube Playlist
+                  </Button>
+                )}
+              </ButtonGroup>
             </>
           )}
 
-          {/* ✅ Button to View YouTube Playlist */}
-          {playlistCreated && youtubePlaylistUrl && (
-            <Button variant="contained" color="primary" href={youtubePlaylistUrl} target="_blank" sx={{ marginBottom: 2 }}>
-              View Your YouTube Playlist
-            </Button>
-          )}
           <Button variant="outlined" sx={{ marginBottom: 2 }} onClick={handleSelectAll}>
             {tracks.every((track) => track.selected) ? "Deselect All" : "Select All"}
           </Button>
