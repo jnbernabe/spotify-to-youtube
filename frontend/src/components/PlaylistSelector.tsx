@@ -28,11 +28,10 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
         showToast("Fetching playlists...", "info");
         const userPlaylists = await fetchPlaylists(token as string);
         setPlaylists(userPlaylists);
+        setLoading(false);
       } catch (error) {
         console.error("🚨 Error fetching playlists:", error);
         showToast("Failed to fetch playlists", "error");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -41,7 +40,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
 
   const filteredPlaylists = playlists.filter((playlist) => playlist.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />;
+  //if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5, ease: "easeOut" }}>
@@ -51,7 +50,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ token, onSelect, se
         </Typography>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
-            <Typography variant="body1">Starting Server & Loading Playlists...</Typography>
             <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 3 }} />
           </Box>
         ) : (

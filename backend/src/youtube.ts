@@ -17,20 +17,26 @@ const FRONTEND_URI = process.env.PROD ? process.env.PROD_FRONT_END : process.env
 
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 
-router.get("/auth", (req, res) => {
+const youtubeAuth = async (req: express.Request, res: express.Response) => {
   const scope = "https://www.googleapis.com/auth/youtube";
-  const authUrl = `https://accounts.google.com/o/oauth2/auth?${querystring.stringify({
-    client_id: YOUTUBE_CLIENT_ID,
-    redirect_uri: YOUTUBE_REDIRECT_URI,
-    response_type: "code",
-    scope,
-    access_type: "offline",
-    prompt: "consent",
-  })}`;
-
-  logger.info("Redirecting to Google OAuth");
-  res.redirect(authUrl);
-});
+  logger.info("Logging in with Google");
+  try {
+    const authUrl = `https://accounts.google.com/o/oauth2/auth?${querystring.stringify({
+      client_id: YOUTUBE_CLIENT_ID,
+      redirect_uri: YOUTUBE_REDIRECT_URI,
+      response_type: "code",
+      scope,
+      access_type: "offline",
+      prompt: "consent",
+    })}`;
+    logger.info("Redirecting to Google OAuth");
+    res.redirect(authUrl);
+  } catch (error) {
+    logger.error("Error generating Google OAuth URL:", error);
+    res.status(500).json({ error: "Failed to generate Google OAuth URL" });
+  }
+};
+router.get("/auth", youtubeAuth);
 
 router.get("/auth/callback", async (req, res) => {
   const code = req.query.code as string;
@@ -137,15 +143,19 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
     logger.warn("Missing required parameters");
     return res.status(400).json({ error: "Missing required parameters" });
   }
-
+  let createResponse: any;
   try {
     // Step 1: Create Playlist**
-    const createResponse = await axios.post(
+    createResponse = await axios.post(
       `${YOUTUBE_PLAYLIST_URL}?part=snippet`, // ✅ Corrected part parameter
       {
         snippet: {
           title: title,
           description: "Playlist created via API",
+          defaultLanguage: "en",
+          status: {
+            privacyStatus: "public",
+          },
         },
       },
       {
@@ -155,10 +165,14 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
         },
       }
     );
+  } catch (error: AxiosError | any) {
+    logger.error("Error creating playlist");
+    return res.status(error.response.status).json({ error: error.response?.data || error.message });
+  }
 
-    const playlistId = createResponse.data.id;
-    logger.info(`Playlist Created: ${playlistId}`);
-
+  const playlistId = createResponse.data.id;
+  logger.info(`Playlist Created: ${playlistId}`);
+  try {
     // Step 2: Add Videos to Playlist**
     for (const videoId of videoIds) {
       await axios.post(
@@ -180,13 +194,13 @@ const createPlaylist: express.RequestHandler = async (req, res): Promise<any> =>
         }
       );
     }
-
-    logger.info("All videos added to playlist.");
-    res.json({ success: true, playlistId, title });
   } catch (error: AxiosError | any) {
-    logger.error("Error creating playlist");
-    res.status(error.response.status).json({ error: error.response?.data || error.message });
+    logger.error("Error adding videos to playlist");
+    return res.status(error.response.status).json({ error: error.response?.data || error.message });
   }
+
+  logger.info("All videos added to playlist.");
+  res.json({ success: true, playlistId, title });
 };
 router.post("/create-playlist", createPlaylist);
 

@@ -28,7 +28,7 @@ export const showToast = (message: string, type: "success" | "error" | "info", t
     hideProgressBar: false,
     closeOnClick: true,
     pauseOnHover: true,
-    draggable: true,
+    draggable: false,
   });
 };
 

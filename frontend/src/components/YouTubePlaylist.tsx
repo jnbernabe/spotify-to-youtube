@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchPlaylistTracks, searchYouTube, createYouTubePlaylist, loginWithYouTube } from "../api";
-import { Button, Grid, Card, CardMedia, CardContent, Typography, CircularProgress, Box } from "@mui/material";
+import { Button, Grid, Card, CardMedia, CardContent, Typography, Box } from "@mui/material";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "../components/Toast";
@@ -46,10 +46,15 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [playlistCreated, setPlaylistCreated] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  //const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState<boolean>(false);
   const [youtubePlaylistUrl, setYouTubePlaylistUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // ✅ Filter tracks based on search query
+  const filteredTracks = tracks.filter((track) => track.name.toLowerCase().includes(searchQuery.toLowerCase()) || track.artist.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const selectedTracks = tracks.filter((track) => track.selected);
 
   // ✅ Restore selected playlist after YouTube login
   useEffect(() => {
@@ -75,7 +80,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
           artist: track.artist,
           album: track.album,
           albumArt: track.albumArt,
-          selected: true,
+          selected: false,
         }));
         setTracks(formattedTracks);
       } catch (error) {
@@ -94,11 +99,15 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
     }
   }, [youtubeToken, navigate]);
 
-  // ✅ Filter tracks based on search query
-  const filteredTracks = tracks.filter((track) => track.name.toLowerCase().includes(searchQuery.toLowerCase()) || track.artist.toLowerCase().includes(searchQuery.toLowerCase()));
-
   const handleTrackToggle = (trackId: string) => {
     setTracks((prevTracks) => prevTracks.map((track) => (track.id === trackId ? { ...track, selected: !track.selected } : track)));
+  };
+
+  const handleSelectAll = () => {
+    setTracks((prevTracks) => {
+      const allSelected = prevTracks.every((track) => track.selected);
+      return prevTracks.map((track) => ({ ...track, selected: !allSelected }));
+    });
   };
 
   const handleCreatePlaylist = async () => {
@@ -108,13 +117,13 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
     }
 
     setLoading(true);
-    setError(null);
+    //setError(null);
 
     try {
       const selectedTracks = tracks.filter((track) => track.selected);
 
       if (selectedTracks.length === 0) {
-        showToast("No tracks selected. Please select at least one track.", "error");
+        showToast("Please select at least one track.", "error");
         //setError("No tracks selected. Please select at least one track.");
         setLoading(false);
         return;
@@ -139,7 +148,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
 
       if (validVideoIds.length === 0) {
         //setError("No YouTube videos found for this playlist.");
-        showToast("No YouTube videos found for this playlist.", "error");
+        showToast("No YouTube music videos found for this playlist.", "error");
         setLoading(false);
         return;
       }
@@ -150,7 +159,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
       showToast("YouTube Playlist Created Successfully!", "success");
     } catch (error: any) {
       console.error("🚨 Error creating YouTube playlist:", error);
-      setError("Failed to create YouTube playlist.");
+      showToast("Failed to create YouTube playlist.", "error");
     } finally {
       setLoading(false);
     }
@@ -162,9 +171,15 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
         <Typography variant="h4" align="center" gutterBottom>
           {playlistName}
         </Typography>
-        <Typography variant="h6" align="center">
-          Select up to 10 Songs
-        </Typography>
+        {selectedTracks.length < 10 ? (
+          <Typography variant="h5" align="center" gutterBottom>
+            {`Selected Songs: ${selectedTracks.length}/10`}
+          </Typography>
+        ) : (
+          <Typography variant="h5" align="center" gutterBottom color="red">
+            {`Selected Songs: ${selectedTracks.length}/10`}
+          </Typography>
+        )}
 
         <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
           {/* <Typography variant="h6">Select Tracks:</Typography> */}
@@ -179,12 +194,6 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
               </Button>
             </>
           )}
-          {error && (
-            <Typography color="error" align="center">
-              {error}
-            </Typography>
-          )}
-          {loading && <CircularProgress />}
 
           {/* ✅ Button to View YouTube Playlist */}
           {playlistCreated && youtubePlaylistUrl && (
@@ -192,7 +201,7 @@ const YouTubePlaylist: React.FC<YouTubePlaylistProps> = ({ youtubeToken, spotify
               View Your YouTube Playlist
             </Button>
           )}
-          <Button variant="outlined" sx={{ marginBottom: 2 }} onClick={() => setTracks(tracks.map((track) => ({ ...track, selected: !track.selected })))}>
+          <Button variant="outlined" sx={{ marginBottom: 2 }} onClick={handleSelectAll}>
             {tracks.every((track) => track.selected) ? "Deselect All" : "Select All"}
           </Button>
         </Box>

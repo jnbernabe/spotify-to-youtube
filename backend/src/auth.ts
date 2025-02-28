@@ -12,8 +12,8 @@ const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.PROD ? `${process.env.PROD_BACK_END}/auth/spotify/callback` : `${process.env.LOCAL_BACK_END}/auth/spotify/callback`;
 const FRONTEND_URI = process.env.PROD ? `${process.env.PROD_FRONT_END}/` : `${process.env.LOCAL_FRONT_END}`;
 
-logger.info("REDIRECT_URI", process.env.LOCAL_BACK_END);
-logger.info("FRONTEND_URI", FRONTEND_URI);
+logger.info(`REDIRECT_URI: ${REDIRECT_URI}`);
+logger.info(`FRONTEND_URI: ${FRONTEND_URI}`);
 
 const generateRandomString = (length: number) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -25,6 +25,7 @@ const generateRandomString = (length: number) => {
 router.get("/login", (req, res) => {
   const scope = "user-read-private user-read-email playlist-read-private user-library-read";
   const state = generateRandomString(16);
+  logger.info("Logging in with Spotify");
   const authUrl = `https://accounts.spotify.com/authorize?${querystring.stringify({
     response_type: "code",
     client_id: SPOTIFY_CLIENT_ID,
